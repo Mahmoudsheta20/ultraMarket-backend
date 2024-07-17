@@ -8,23 +8,23 @@ const { convertStringToArray } = require("../utils/utils");
 // Get all products
 router.get("/", async (req, res) => {
   // Check for authorization header
-  const token = req.headers.authorization?.split(" ")[1];
-  console.log(token);
-  if (!token) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  // const token = req.headers.authorization?.split(" ")[1];
+  // console.log(token);
+  // if (!token) {
+  //   return res.status(401).json({ error: "Unauthorized" });
+  // }
 
-  // Validate the token with Supabase
-  const { data: session, error: sessionError } =
-    await supabase.auth.getSession();
-  if (sessionError || !session) {
-    return res.status(401).json({ error: "Invalid token" });
-  }
+  // // Validate the token with Supabase
+  // const { data: session, error: sessionError } =
+  //   await supabase.auth.getSession();
+  // if (sessionError || !session) {
+  //   return res.status(401).json({ error: "Invalid token" });
+  // }
 
-  // Ensure the session is valid
-  if (!session.session) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  // // Ensure the session is valid
+  // if (!session.session) {
+  //   return res.status(401).json({ error: "Unauthorized" });
+  // }
 
   const { data: parantCateogry, error } = await supabase
     .from("category")
