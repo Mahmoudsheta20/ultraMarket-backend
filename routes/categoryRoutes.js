@@ -77,7 +77,10 @@ router.get("/", async (req, res) => {
       );
 
       return {
-        parant: { name: cateogry.name, banner_image: banner_image?.imageurl },
+        parant: {
+          name: cateogry.name,
+          banner_image: banner_image?.imageurl ?? "",
+        },
         children: children,
         products: products[0],
       };
