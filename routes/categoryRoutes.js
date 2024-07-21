@@ -4,6 +4,8 @@ const router = express.Router();
 const supabase = require("../supabaseClient");
 const { calculateDiscountedPrice } = require("../utils/handelPrice");
 const { convertStringToArray } = require("../utils/utils");
+const productRoutes = require("./productRoutes");
+const { getProductsCategories } = require("../services/apiCategories");
 
 // Get all products
 router.get("/", async (req, res) => {
@@ -54,21 +56,35 @@ router.get("/", async (req, res) => {
             .eq("isprimary", true)
             .single();
           console.log(child_image);
+
           return {
             ...cateogry,
             imageurl: child_image?.imageurl,
           };
         })
       );
-      console.log(children);
+      const products = await Promise.all(
+        childrenCateogry.map(async (cateogry) => {
+          const { data: child_image } = await supabase
+            .from("category_images")
+            .select("imageurl")
+            .eq("catogryId", cateogry.categoryid)
+            .eq("isprimary", true)
+            .single();
+          const products = await getProductsCategories(cateogry.categoryid);
+          return products;
+        })
+      );
+
       return {
         parant: { name: cateogry.name, banner_image: banner_image?.imageurl },
         children: children,
+        products: products[0],
       };
     })
   );
 
-  res.json(categories);
+  res.json({ categories });
 });
 
 module.exports = router;
