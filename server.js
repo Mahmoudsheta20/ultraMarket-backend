@@ -3,6 +3,8 @@ const express = require("express");
 const productRoutes = require("./routes/productRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const userRoutes = require("./routes/userRoutes");
+const cartRoutes = require("./routes/cartRoutes");
+const statisticsRoutes = require("./routes/statisticsRoutes");
 
 const app = express();
 const port = 3000;
@@ -13,6 +15,8 @@ app.use(express.json());
 app.use("/products", productRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/user", userRoutes);
+app.use("/cart", cartRoutes);
+app.use("/statistics", statisticsRoutes);
 
 app.use("/test", (req, res) => {
   const accountSid = "ACfa1535405c9414b41892cfd974c8d6d2";

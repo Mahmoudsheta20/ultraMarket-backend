@@ -5,29 +5,14 @@ const supabase = require("../supabaseClient");
 const { calculateDiscountedPrice } = require("../utils/handelPrice");
 const { convertStringToArray } = require("../utils/utils");
 const productRoutes = require("./productRoutes");
-const { getProductsCategories } = require("../services/apiCategories");
+const {
+  getProductsCategories,
+  getBrandByCategoryId,
+  getBannerByCategoryId,
+} = require("../services/apiCategories");
 
 // Get all products
 router.get("/", async (req, res) => {
-  // Check for authorization header
-  // const token = req.headers.authorization?.split(" ")[1];
-  // console.log(token);
-  // if (!token) {
-  //   return res.status(401).json({ error: "Unauthorized" });
-  // }
-
-  // // Validate the token with Supabase
-  // const { data: session, error: sessionError } =
-  //   await supabase.auth.getSession();
-  // if (sessionError || !session) {
-  //   return res.status(401).json({ error: "Invalid token" });
-  // }
-
-  // // Ensure the session is valid
-  // if (!session.session) {
-  //   return res.status(401).json({ error: "Unauthorized" });
-  // }
-
   const { data: parantCateogry, error } = await supabase
     .from("category")
     .select("*")
@@ -35,6 +20,7 @@ router.get("/", async (req, res) => {
   if (error) {
     return res.status(500).json({ error: error.message });
   }
+
   const categories = await Promise.all(
     parantCateogry.map(async (cateogry) => {
       const { data: childrenCateogry, error } = await supabase
@@ -88,6 +74,24 @@ router.get("/", async (req, res) => {
   );
 
   res.json({ categories });
+});
+
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  const product = await getProductsCategories(id);
+  const brands = await getBrandByCategoryId(id);
+  console.log(brands);
+  res.json(product);
+});
+router.get("/brands/:id", async (req, res) => {
+  const { id } = req.params;
+  const brands = await getBrandByCategoryId(id);
+  res.json(brands);
+});
+router.get("/banner/:id", async (req, res) => {
+  const { id } = req.params;
+  const banner = await getBannerByCategoryId(id);
+  res.json(banner);
 });
 
 module.exports = router;

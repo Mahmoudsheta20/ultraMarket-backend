@@ -4,15 +4,17 @@ const router = express.Router();
 const supabase = require("../supabaseClient");
 const { calculateDiscountedPrice } = require("../utils/handelPrice");
 const { convertStringToArray } = require("../utils/utils");
+const {
+  getBestDeals,
+  getProductDeatils,
+  getReview,
+} = require("../services/apiProducts");
 
 // Get all products
-router.get("/", async (req, res) => {
+router.get("/all", async (req, res) => {
   const { data, error } = await supabase
     .from("product")
     .select("productid, name, discount, price");
-  if (error) {
-    return res.status(500).json({ error: error.message });
-  }
 
   const productsWithDiscount = await Promise.all(
     data.map(async (product) => {
@@ -38,49 +40,22 @@ router.get("/", async (req, res) => {
 });
 
 // Get a single product by ID
-router.get("/:id", async (req, res) => {
+router.get("/product/:id", async (req, res) => {
   const { id } = req.params;
-  const { data: product, error } = await supabase
-    .from("product")
-    .select("*")
-    .eq("productid", id)
-    .single();
+  const product = await getProductDeatils(id);
+  res.json(product);
+});
 
-  const discountedPrice = calculateDiscountedPrice(
-    Number(product.price),
-    Number(product.discount)
-  );
-  const { data: product_image, error: product_image_error } = await supabase
-    .from("product_image")
-    .select("imageurl")
-    .eq("productid", product.productid);
+router.get("/reviews/:productId", async (req, res) => {
+  const { productId } = req.params;
+  const review = await getReview(productId);
+  const ratingAverage = review.reduce((acc, cur) => acc + cur.rating, 0);
+  res.json({ review, ratingAverage });
+});
 
-  let { data: product_specification } = await supabase
-    .from("product_specification")
-    .select("specificationid, value")
-    .eq("productid", product.productid);
-  const specifications = await Promise.all(
-    product_specification.map(async (specification) => {
-      let { data: specifications, error } = await supabase
-        .from("specification")
-        .select("name")
-        .eq("specificationid", specification.specificationid)
-        .single();
-      return { name: specifications.name, value: specification.value };
-    })
-  );
-
-  if (error || product_image_error) {
-    return res.status(500).json({ error: error.message, product_image_error });
-  }
-  const highlights = convertStringToArray(product.highlights);
-  res.json({
-    ...product,
-    discountedPrice,
-    product_image,
-    highlights,
-    specifications,
-  });
+router.get("/bestdeals", async (req, res) => {
+  const products = await getBestDeals();
+  res.json(products);
 });
 
 // Create a new product
