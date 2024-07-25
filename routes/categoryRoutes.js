@@ -73,7 +73,7 @@ router.get("/", async (req, res) => {
     })
   );
 
-  res.json({ categories });
+  res.json(categories);
 });
 
 router.get("/:id", async (req, res) => {
