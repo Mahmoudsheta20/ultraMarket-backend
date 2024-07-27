@@ -22,7 +22,7 @@ async function createCart(userid) {
 }
 
 async function addItemToCart(body, cartid) {
-  const { productid, quantity, userid } = body;
+  const { productid, quantity, price, userid } = body;
   const isInCart = await checkProductsInCart(productid, cartid);
 
   if (!isInCart) {
@@ -31,7 +31,11 @@ async function addItemToCart(body, cartid) {
         .from("cart_item")
         .insert([{ cartid, productid, quantity }])
         .select();
-      return data;
+      const totalamount = Number(price) * Number(quantity);
+
+      const update = updateTotalPrice(cartid, totalamount);
+      console.log(update);
+      if (update) return data;
     } catch (error) {
       if (error) return error.message;
     }
@@ -41,7 +45,7 @@ async function addItemToCart(body, cartid) {
 async function getItemsCart(userid) {
   let { data: cart, error } = await supabase
     .from("cart")
-    .select("cartid")
+    .select("cartid,totalamount")
     .eq("userid", userid)
     .eq("status", "Pending")
     .single();
@@ -66,13 +70,13 @@ async function getItemsCart(userid) {
             .eq("isprimary", true)
             .single();
           return {
-            ...items,
+            ...items.products,
 
             imageurl: product_image.imageurl,
           };
         })
       );
-      return mutationProduct;
+      return { ...cart, products: mutationProduct };
     }
   }
 }
@@ -108,5 +112,23 @@ async function checkProductsInCart(productid, cartid) {
     .eq("productid", productid)
     .single();
   return cart_item;
+}
+
+async function updateTotalPrice(cartid, totalamount) {
+  let { data: cart, error: errorCart } = await supabase
+    .from("cart")
+    .select("totalamount")
+    .eq("cartid", cartid)
+    .single();
+
+  let total = cart?.totalamount
+    ? totalamount + Number(cart?.totalamount)
+    : totalamount;
+  const { data, error } = await supabase
+    .from("cart")
+    .update({ totalamount: total })
+    .eq("cartid", cartid)
+    .select();
+  return data;
 }
 module.exports = { createCart, addItemToCart, getItemsCart };
