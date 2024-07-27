@@ -45,6 +45,15 @@ router.get("/product/:id", async (req, res) => {
   const product = await getProductDeatils(id);
   res.json(product);
 });
+router.get("/product/image/:id", async (req, res) => {
+  const { id } = req.params;
+  const { data: product_image, error } = await supabase
+    .from("product_image")
+    .select("imageurl")
+    .eq("productid", id)
+    .eq("isprimary", true);
+  res.json(product_image);
+});
 
 router.get("/reviews/:productId", async (req, res) => {
   const { productId } = req.params;
