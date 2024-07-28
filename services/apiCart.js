@@ -21,8 +21,8 @@ async function createCart(userid) {
   return null;
 }
 
-async function addItemToCart(body, cartid) {
-  const { productid, quantity, price, userid } = body;
+async function addItemToCart(body, cartid, userid) {
+  const { productid, quantity } = body;
   const isInCart = await checkProductsInCart(productid, cartid);
 
   if (!isInCart) {
@@ -31,13 +31,11 @@ async function addItemToCart(body, cartid) {
         .from("cart_item")
         .insert([{ cartid, productid, quantity }])
         .select();
-      const totalamount = Number(price) * Number(quantity);
-
-      const update = updateTotalPrice(cartid, totalamount);
-      console.log(update);
+      await reduceTotalamount(userid);
       if (update) return data;
     } catch (error) {
       if (error) return error.message;
+    } finally {
     }
   }
 }
@@ -71,12 +69,23 @@ async function getItemsCart(userid) {
             .single();
           return {
             ...items.products,
-
             imageurl: product_image.imageurl,
+            quantity: items.quantity,
           };
         })
       );
-      return { ...cart, products: mutationProduct };
+
+      const totalamountWithOutDiscount = cartItems.reduce(
+        (acc, cur) => acc + Number(cur.products.price) * Number(cur.quantity),
+        0
+      );
+      const discount = totalamountWithOutDiscount - Number(cart.totalamount);
+      return {
+        ...cart,
+        discount,
+        totalamountWithOutDiscount,
+        products: mutationProduct,
+      };
     }
   }
 }
@@ -84,24 +93,16 @@ async function getItemsCart(userid) {
 const getProductDeatils = async (id) => {
   const { data: product, error } = await supabase
     .from("product")
-    .select("*")
-    .eq("productid", id);
-
+    .select("price,discount")
+    .eq("productid", id)
+    .single();
+  console.log(product);
   const discountedPrice = calculateDiscountedPrice(
     Number(product?.price),
     Number(product?.discount)
   );
-  const { data: product_image, error: product_image_error } = await supabase
-    .from("product_image")
-    .select("imageurl")
-    .eq("productid", id)
-    .eq("isprimary", true);
 
-  return {
-    ...product,
-    discountedPrice,
-    product_image,
-  };
+  return { discountedPrice, ...product };
 };
 
 async function checkProductsInCart(productid, cartid) {
@@ -131,4 +132,52 @@ async function updateTotalPrice(cartid, totalamount) {
     .select();
   return data;
 }
-module.exports = { createCart, addItemToCart, getItemsCart };
+
+async function updateProductInCart(body, cartid, userid) {
+  const { productid, quantity } = body;
+  const { data, error } = await supabase
+    .from("cart_item")
+    .update({ quantity })
+    .eq("cartid", cartid)
+    .eq("productid", productid)
+    .select();
+  return await reduceTotalamount(userid);
+}
+async function deleteProductInCart(body, cartid) {
+  const { productid } = body;
+  const { error } = await supabase
+    .from("cart_item")
+    .delete()
+    .eq("cartid", cartid)
+    .eq("productid", productid);
+  return error;
+}
+
+async function reduceTotalamount(userid) {
+  const cartItems = await getItemsCart(userid);
+  const total = cartItems.products.map((product) => {
+    const totalamountWithDiscount =
+      calculateDiscountedPrice(product?.price, product?.discount) *
+      product?.quantity;
+    const totalamount = product?.price * product?.quantity;
+    return { totalamountWithDiscount, totalamount };
+  });
+  const totalamountWithDiscount = total.reduce(
+    (acc, cur) => acc + cur.totalamountWithDiscount,
+    0
+  );
+  const { data: cart, error: error_cart } = await supabase
+    .from("cart")
+    .update({ totalamount: totalamountWithDiscount })
+    .eq("cartid", cartItems.cartid);
+
+  return cart;
+}
+
+module.exports = {
+  createCart,
+  addItemToCart,
+  getItemsCart,
+  updateProductInCart,
+  deleteProductInCart,
+};

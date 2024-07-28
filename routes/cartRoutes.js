@@ -5,6 +5,8 @@ const {
   createCart,
   addItemToCart,
   getItemsCart,
+  updateProductInCart,
+  deleteProductInCart,
 } = require("../services/apiCart");
 const { jwtDecode } = require("jwt-decode");
 router.get("/:userid", async (req, res) => {
@@ -26,7 +28,7 @@ router.post("/item/:userid", async (req, res) => {
   }
   const { userid } = req.params;
   const cart = await createCart(userid);
-  const data = await addItemToCart(req.body, cart);
+  const data = await addItemToCart(req.body, cart, userid);
   res.status(201).json(data);
 });
 // Endpoint to create an order from a cart
@@ -80,6 +82,29 @@ router.post("/cart/:cart_id/checkout", async (req, res) => {
   await supabase.from("cart_item").delete().eq("cart_id", cart_id);
 
   res.json({ message: "Order created successfully", order });
+});
+
+router.put("/item/:userid", async (req, res) => {
+  // Check for authorization header
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  const { userid } = req.params;
+  const cart = await createCart(userid);
+  const data = await updateProductInCart(req.body, cart, userid);
+  res.status(201).json(data);
+});
+router.delete("/item/:userid", async (req, res) => {
+  // Check for authorization header
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  const { userid } = req.params;
+  const cart = await createCart(userid);
+  const data = await deleteProductInCart(req.body, cart);
+  res.status(201).json(data);
 });
 
 module.exports = router;
