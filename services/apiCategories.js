@@ -48,11 +48,11 @@ async function getBrandByCategoryId(categoryid) {
       if (error) {
         return res.status(500).json({ error: error.message });
       }
-
       let { data: brands } = await supabase
         .from("brands")
         .select("Name,imageUrl")
-        .eq("id", product.brandId);
+        .eq("id", product.brandId)
+        .single();
       return brands;
     })
   );

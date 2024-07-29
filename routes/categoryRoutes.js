@@ -91,7 +91,7 @@ router.get("/brands/:id", async (req, res) => {
 router.get("/banner/:id", async (req, res) => {
   const { id } = req.params;
   const banner = await getBannerByCategoryId(id);
-  res.json(banner);
+  res.json(...banner);
 });
 
 module.exports = router;
