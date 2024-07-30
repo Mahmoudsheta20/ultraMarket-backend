@@ -28,8 +28,10 @@ router.post("/item/:userid", async (req, res) => {
   }
   const { userid } = req.params;
   const cart = await createCart(userid);
-  const data = await addItemToCart(req.body, cart, userid);
-  res.status(201).json(data);
+  if (cart) {
+    const data = await addItemToCart(req.body, cart, userid);
+    res.status(201).json(data);
+  }
 });
 // Endpoint to create an order from a cart
 router.post("/cart/:cart_id/checkout", async (req, res) => {
@@ -103,7 +105,7 @@ router.delete("/item/:userid", async (req, res) => {
   }
   const { userid } = req.params;
   const cart = await createCart(userid);
-  const data = await deleteProductInCart(req.body, cart);
+  const data = await deleteProductInCart(req.body, cart, userid);
   res.status(201).json(data);
 });
 

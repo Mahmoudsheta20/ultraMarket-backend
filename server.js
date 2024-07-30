@@ -8,6 +8,8 @@ const statisticsRoutes = require("./routes/statisticsRoutes");
 
 const app = express();
 const port = 3000;
+var cors = require("cors");
+app.use(cors());
 
 app.use(express.json());
 

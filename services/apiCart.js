@@ -32,11 +32,13 @@ async function addItemToCart(body, cartid, userid) {
         .insert([{ cartid, productid, quantity }])
         .select();
       await reduceTotalamount(userid);
-      if (update) return data;
+      if (error) return error.message;
+      return "The product has been added to the shopping cart";
     } catch (error) {
       if (error) return error.message;
-    } finally {
     }
+  } else {
+    return "This Product Is Already In Cart";
   }
 }
 
@@ -143,35 +145,50 @@ async function updateProductInCart(body, cartid, userid) {
     .select();
   return await reduceTotalamount(userid);
 }
-async function deleteProductInCart(body, cartid) {
+async function deleteProductInCart(body, cartid, userid) {
   const { productid } = body;
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("cart_item")
     .delete()
     .eq("cartid", cartid)
     .eq("productid", productid);
-  return error;
+  await reduceTotalamount(userid);
+  let { data: cart_item } = await supabase
+    .from("cart_item")
+    .select("cartitemid")
+    .eq("cartid", cartid);
+  if (!cart_item.length) {
+    console.log("Delete Cart");
+    return await deleteCart(userid);
+  }
 }
 
 async function reduceTotalamount(userid) {
   const cartItems = await getItemsCart(userid);
-  const total = cartItems.products.map((product) => {
-    const totalamountWithDiscount =
-      calculateDiscountedPrice(product?.price, product?.discount) *
-      product?.quantity;
-    const totalamount = product?.price * product?.quantity;
-    return { totalamountWithDiscount, totalamount };
-  });
-  const totalamountWithDiscount = total.reduce(
-    (acc, cur) => acc + cur.totalamountWithDiscount,
-    0
-  );
-  const { data: cart, error: error_cart } = await supabase
-    .from("cart")
-    .update({ totalamount: totalamountWithDiscount })
-    .eq("cartid", cartItems.cartid);
+  if (cartItems) {
+    const total = cartItems.products.map((product) => {
+      const totalamountWithDiscount =
+        calculateDiscountedPrice(product?.price, product?.discount) *
+        product?.quantity;
+      const totalamount = product?.price * product?.quantity;
+      return { totalamountWithDiscount, totalamount };
+    });
+    const totalamountWithDiscount = total.reduce(
+      (acc, cur) => acc + cur.totalamountWithDiscount,
+      0
+    );
+    const { data: cart, error: error_cart } = await supabase
+      .from("cart")
+      .update({ totalamount: totalamountWithDiscount })
+      .eq("cartid", cartItems.cartid);
 
-  return cart;
+    return cart;
+  }
+}
+
+async function deleteCart(userid) {
+  const { error } = await supabase.from("cart").delete().eq("userid", userid);
+  return error;
 }
 
 module.exports = {
