@@ -7,6 +7,8 @@ const {
   getItemsCart,
   updateProductInCart,
   deleteProductInCart,
+  checkProductsInCart,
+  deleteCart,
 } = require("../services/apiCart");
 const { jwtDecode } = require("jwt-decode");
 router.get("/:userid", async (req, res) => {
@@ -18,6 +20,32 @@ router.get("/:userid", async (req, res) => {
   const cart = await getItemsCart(userid);
   if (!cart) res.status(400).json({ message: "this user does not have cart" });
   res.json(cart);
+});
+router.delete("/:userid", async (req, res) => {
+  const { userid } = req.params;
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  const cart = await deleteCart(userid);
+  if (!cart) res.status(400).json({ message: "this user does not have cart" });
+  res.json("Delte Cart");
+});
+router.post("/item/:userid/incart", async (req, res) => {
+  const { userid } = req.params;
+  const { productid } = req.body;
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  try {
+    const cart = await getItemsCart(userid);
+    const inCart = await checkProductsInCart(productid, cart?.cartid);
+    if (inCart) res.json({ inCart: true });
+    res.json({ inCart: false });
+  } catch (error) {
+    res.status(400);
+  }
 });
 // Endpoint to add an item to a cart
 router.post("/item/:userid", async (req, res) => {
@@ -97,6 +125,7 @@ router.put("/item/:userid", async (req, res) => {
   const data = await updateProductInCart(req.body, cart, userid);
   res.status(201).json(data);
 });
+
 router.delete("/item/:userid", async (req, res) => {
   // Check for authorization header
   const token = req.headers.authorization?.split(" ")[1];

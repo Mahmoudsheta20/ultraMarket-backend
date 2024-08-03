@@ -114,6 +114,7 @@ async function checkProductsInCart(productid, cartid) {
     .eq("cartid", cartid)
     .eq("productid", productid)
     .single();
+  if (error) return false;
   return cart_item;
 }
 
@@ -188,7 +189,8 @@ async function reduceTotalamount(userid) {
 
 async function deleteCart(userid) {
   const { error } = await supabase.from("cart").delete().eq("userid", userid);
-  return error;
+  if (error) throw new Error(error.message);
+  return true;
 }
 
 module.exports = {
@@ -197,4 +199,6 @@ module.exports = {
   getItemsCart,
   updateProductInCart,
   deleteProductInCart,
+  checkProductsInCart,
+  deleteCart,
 };
