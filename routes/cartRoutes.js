@@ -27,9 +27,16 @@ router.delete("/:userid", async (req, res) => {
   if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  const cart = await deleteCart(userid);
-  if (!cart) res.status(400).json({ message: "this user does not have cart" });
-  res.json("Delte Cart");
+  try {
+    await getItemsCart(userid);
+    await deleteCart(userid);
+    res.status(200).json({
+      status: 200,
+      message: cart,
+    });
+  } catch (error) {
+    res.status(400).json({ status: 400, message: error.message });
+  }
 });
 router.post("/item/:userid/incart", async (req, res) => {
   const { userid } = req.params;
@@ -57,8 +64,18 @@ router.post("/item/:userid", async (req, res) => {
   const { userid } = req.params;
   const cart = await createCart(userid);
   if (cart) {
-    const data = await addItemToCart(req.body, cart, userid);
-    res.status(201).json(data);
+    try {
+      const data = await addItemToCart(req.body, cart, userid);
+      res.status(201).json({
+        status: 201,
+        message: data,
+      });
+    } catch (error) {
+      res.status(403).json({
+        status: 403,
+        message: error.message,
+      });
+    }
   }
 });
 // Endpoint to create an order from a cart
@@ -121,9 +138,19 @@ router.put("/item/:userid", async (req, res) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
   const { userid } = req.params;
-  const cart = await createCart(userid);
-  const data = await updateProductInCart(req.body, cart, userid);
-  res.status(201).json(data);
+  try {
+    const cart = await createCart(userid);
+    const data = await updateProductInCart(req.body, cart, userid);
+    res.status(201).json({
+      status: 201,
+      message: data,
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: 400,
+      message: error.message,
+    });
+  }
 });
 
 router.delete("/item/:userid", async (req, res) => {
@@ -133,9 +160,13 @@ router.delete("/item/:userid", async (req, res) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
   const { userid } = req.params;
-  const cart = await createCart(userid);
-  const data = await deleteProductInCart(req.body, cart, userid);
-  res.status(201).json(data);
+  try {
+    const cart = await createCart(userid);
+    const data = await deleteProductInCart(req.body, cart, userid);
+    res.status(200).json({ status: 200, message: data });
+  } catch (error) {
+    res.status(400).json({ status: 400, message: error.message });
+  }
 });
 
 module.exports = router;

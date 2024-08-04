@@ -24,7 +24,6 @@ async function createCart(userid) {
 async function addItemToCart(body, cartid, userid) {
   const { productid, quantity } = body;
   const isInCart = await checkProductsInCart(productid, cartid);
-
   if (!isInCart) {
     try {
       const { data, error } = await supabase
@@ -32,13 +31,13 @@ async function addItemToCart(body, cartid, userid) {
         .insert([{ cartid, productid, quantity }])
         .select();
       await reduceTotalamount(userid);
-      if (error) return error.message;
+      if (error) throw new Error(error);
       return "The product has been added to the shopping cart";
     } catch (error) {
-      if (error) return error.message;
+      throw new Error(error);
     }
   } else {
-    return "This Product Is Already In Cart";
+    throw new Error("This Product Is Already In Cart");
   }
 }
 
@@ -144,7 +143,9 @@ async function updateProductInCart(body, cartid, userid) {
     .eq("cartid", cartid)
     .eq("productid", productid)
     .select();
-  return await reduceTotalamount(userid);
+  if (error) throw new Error(error);
+  await reduceTotalamount(userid);
+  return "the product quantity has been updated";
 }
 async function deleteProductInCart(body, cartid, userid) {
   const { productid } = body;
@@ -153,15 +154,16 @@ async function deleteProductInCart(body, cartid, userid) {
     .delete()
     .eq("cartid", cartid)
     .eq("productid", productid);
+  if (error) throw new Error(error);
   await reduceTotalamount(userid);
   let { data: cart_item } = await supabase
     .from("cart_item")
     .select("cartitemid")
     .eq("cartid", cartid);
   if (!cart_item.length) {
-    console.log("Delete Cart");
     return await deleteCart(userid);
   }
+  return "the product has been deleted from cart";
 }
 
 async function reduceTotalamount(userid) {
@@ -189,8 +191,8 @@ async function reduceTotalamount(userid) {
 
 async function deleteCart(userid) {
   const { error } = await supabase.from("cart").delete().eq("userid", userid);
-  if (error) throw new Error(error.message);
-  return true;
+  if (error) throw new Error(error);
+  return "the cart deleted";
 }
 
 module.exports = {
