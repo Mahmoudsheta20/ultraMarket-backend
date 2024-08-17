@@ -115,4 +115,33 @@ router.delete("/:id", async (req, res) => {
   res.status(204).send();
 });
 
+router.get("/search", async (req, res) => {
+  const { q, page = 1, limit = 10 } = req.query;
+
+  if (!q) {
+    return res.status(400).json({ error: "Query parameter is missing" });
+  }
+
+  // Calculate offset for pagination
+  const offset = (page - 1) * limit;
+
+  // Query the products table with pagination
+  const { data, error, count } = await supabase
+    .from("product")
+    .select("*", { count: "exact" }) // Get total count for pagination
+    .ilike("name", `%${q}%`)
+    .range(offset, offset + limit - 1); // Perform pagination
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.status(200).json({
+    data, // The paginated data
+    totalCount: count, // Total number of matching records
+    currentPage: page, // Current page number
+    totalPages: Math.ceil(count / limit), // Total pages based on the limit
+  });
+});
+
 module.exports = router;
