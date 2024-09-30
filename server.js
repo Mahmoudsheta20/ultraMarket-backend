@@ -24,11 +24,11 @@ app.use("/statistics", statisticsRoutes);
 app.use("/checkout", checkoutRouter);
 
 app.post("/callback", async (req, res) => {
-  const { payment_result } = req.body;
+  const { payment_result, customer_details } = req.body;
   if (payment_result?.response_status) {
     const { data, error } = await supabase
       .from("test")
-      .insert([{ name: "Sheta" }])
+      .insert([{ name: customer_details.name }])
       .select();
     res.json(data);
   }
