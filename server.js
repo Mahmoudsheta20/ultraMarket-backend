@@ -30,6 +30,7 @@ app.post("/callback", async (req, res) => {
       .from("test")
       .insert([{ name: "Sheta" }])
       .select();
+    res.json(data);
   }
 });
 
