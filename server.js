@@ -24,11 +24,15 @@ app.use("/statistics", statisticsRoutes);
 app.use("/checkout", checkoutRouter);
 
 app.post("/callback", async (req, res) => {
-  const { data, error } = await supabase
-    .from("test")
-    .insert([{ name: "Sheta" }])
-    .select();
+  const { payment_result } = req.body;
+  if (payment_result?.response_status) {
+    const { data, error } = await supabase
+      .from("test")
+      .insert([{ name: "Sheta" }])
+      .select();
+  }
 });
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
