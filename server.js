@@ -8,7 +8,7 @@ const statisticsRoutes = require("./routes/statisticsRoutes");
 const checkoutRouter = require("./routes/checkoutRouter");
 
 const app = express();
-const port = 3000;
+const port = 4000;
 var cors = require("cors");
 const supabase = require("./supabaseClient");
 app.use(cors());
