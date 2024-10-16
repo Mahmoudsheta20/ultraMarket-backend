@@ -90,13 +90,11 @@ router.get("/session-status", async (req, res) => {
   //   return res.status(401).json({ error: "Unauthorized" });
   // }
   const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
-  console.log(session);
+
   if (session.status === "complete") {
     return res.json({
       success: true,
       message: "Payment successful!",
-      cartId: cartId,
-      userId: userId,
     });
 
     // const userAgent = req.headers["user-agent"] || "";
