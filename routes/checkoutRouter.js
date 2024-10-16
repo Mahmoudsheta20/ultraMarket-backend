@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const supabase = require("../supabaseClient");
-const { createOrder } = require("../services/apiCheckout");
+const { createOrder, getProdutCart } = require("../services/apiCheckout");
 const stripe = require("stripe")(
   "sk_test_51LpszqFsXNFAupQMcLBtJa9g2nayhasGIOfZYOE85s6o3XdB1EGeNLx4fEdwP0DhDVJ8JKMlCtS0WYH0Yf4Lre1Q00g0iBqCtN"
 );
@@ -13,29 +13,26 @@ router.post("/create-checkout-session", async (req, res) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
   const { cartId, userId } = req.body;
+
   try {
+    const productsCard = await getProdutCart(cartId);
+    console.log(productsCard);
+
     // First, create a product
-    const products = [
-      {
-        name: "Gold Plan",
-        amount: 666600,
-        currency: "usd",
-        quantity: 1,
+    const products = productsCard?.products?.map((product) => {
+      // Calculate the discounted price
+      const discountedPrice = product.price * (1 - product.discount / 100);
+
+      return {
+        name: product.name,
+        amount: Math.round(discountedPrice * 100), // Convert to cents
+        currency: "EGP",
+        quantity: product.quantity,
         images: [
-          "https://ltfpjeeclvrtomahvqyd.supabase.co/storage/v1/object/public/product/image_4.png?t=2024-07-31T19%3A01%3A17.457Z",
+          `https://ltfpjeeclvrtomahvqyd.supabase.co/storage/v1/object/public/${product.imageurl}`, // Adjust the base URL accordingly
         ],
-      },
-      {
-        name: "Silver Plan",
-        amount: 333300,
-        currency: "usd",
-        quantity: 2,
-        images: [
-          "https://ltfpjeeclvrtomahvqyd.supabase.co/storage/v1/object/public/product/image_4.png?t=2024-07-31T19%3A01%3A17.457Z",
-        ],
-      },
-      // Add more products as needed
-    ];
+      };
+    });
 
     // Create line items for each product
     const lineItems = await Promise.all(
@@ -68,9 +65,8 @@ router.post("/create-checkout-session", async (req, res) => {
       success_url: `${YOUR_DOMAIN}/checkout/session-status?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${YOUR_DOMAIN}/checkout/cancel`,
       metadata: {
-        cartId,
-        userId,
-        name: "Mahmoud Sheta",
+        cartId: productsCard?.cartid,
+        userId: productsCard?.userid,
       },
     });
     res.redirect;
@@ -110,6 +106,7 @@ router.get("/session-status", async (req, res) => {
     }
   }
 });
+
 router.get("/cancel", async (req, res) => {
   const userAgent = req.headers["user-agent"] || "";
   if (/iPhone|iPad|Android/i.test(userAgent)) {
