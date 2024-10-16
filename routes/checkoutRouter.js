@@ -102,16 +102,12 @@ router.get("/session-status", async (req, res) => {
     if (/iPhone|iPad|Android/i.test(userAgent)) {
       // Mobile: Redirect to Flutter app using deep link
       const flutterDeepLink = `ultra_ecommerce://order?oderId=652546`;
-      return res.se(flutterDeepLink);
+      return res.redirect(flutterDeepLink);
     } else {
       // Web: Redirect to web order page
       const webOrderUrl = `https://yourdomain.com/order`;
       return res.redirect(webOrderUrl);
     }
-    res.send({
-      cartId: session.metadata.cartId,
-      userId: session.metadata.userId,
-    });
   }
 });
 module.exports = router;
