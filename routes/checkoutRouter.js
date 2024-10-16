@@ -92,17 +92,24 @@ router.get("/session-status", async (req, res) => {
   const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
   console.log(session);
   if (session.status === "complete") {
-    const userAgent = req.headers["user-agent"] || "";
+    return res.json({
+      success: true,
+      message: "Payment successful!",
+      cartId: cartId,
+      userId: userId,
+    });
 
-    if (/iPhone|iPad|Android/i.test(userAgent)) {
-      // Mobile: Redirect to Flutter app using deep link
-      const flutterDeepLink = `ultra_ecommerce://orderView`;
-      return res.send("The Payment success");
-    } else {
-      // Web: Redirect to web order page
-      const webOrderUrl = `https://yourdomain.com/order/${cartId}`;
-      return res.send(webOrderUrl);
-    }
+    // const userAgent = req.headers["user-agent"] || "";
+
+    // if (/iPhone|iPad|Android/i.test(userAgent)) {
+    //   // Mobile: Redirect to Flutter app using deep link
+    //   const flutterDeepLink = `ultra_ecommerce://orderView`;
+    //   return res.send("The Payment success");
+    // } else {
+    //   // Web: Redirect to web order page
+    //   const webOrderUrl = `https://yourdomain.com/order/${cartId}`;
+    //   return res.send(webOrderUrl);
+    // }
     // res.send({
     //   cartId: session.metadata.cartId,
     //   userId: session.metadata.userId,
