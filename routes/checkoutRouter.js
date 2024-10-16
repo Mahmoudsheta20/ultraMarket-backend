@@ -66,7 +66,7 @@ router.post("/create-checkout-session", async (req, res) => {
 
       mode: "payment",
       success_url: `${YOUR_DOMAIN}/checkout/session-status?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${YOUR_DOMAIN}/cancel.html`,
+      cancel_url: `${YOUR_DOMAIN}/checkout/cancel`,
       metadata: {
         cartId,
         userId,
@@ -108,6 +108,18 @@ router.get("/session-status", async (req, res) => {
       const webOrderUrl = `https://yourdomain.com/order`;
       return res.redirect(webOrderUrl);
     }
+  }
+});
+router.get("/cancel", async (req, res) => {
+  const userAgent = req.headers["user-agent"] || "";
+  if (/iPhone|iPad|Android/i.test(userAgent)) {
+    // Mobile: Redirect to Flutter app using deep link
+    const flutterDeepLink = `ultra_ecommerce://cancel`;
+    return res.redirect(flutterDeepLink);
+  } else {
+    // Web: Redirect to web order page
+    const webOrderUrl = `${YOUR_DOMAIN}/cancle`;
+    return res.redirect(webOrderUrl);
   }
 });
 module.exports = router;
