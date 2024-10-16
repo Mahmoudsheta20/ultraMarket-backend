@@ -97,11 +97,11 @@ router.get("/session-status", async (req, res) => {
     if (/iPhone|iPad|Android/i.test(userAgent)) {
       // Mobile: Redirect to Flutter app using deep link
       const flutterDeepLink = `ultra_ecommerce://orderView`;
-      return res.redirect(flutterDeepLink);
+      return res.send("The Payment success");
     } else {
       // Web: Redirect to web order page
       const webOrderUrl = `https://yourdomain.com/order/${cartId}`;
-      return res.send(session);
+      return res.send(webOrderUrl);
     }
     // res.send({
     //   cartId: session.metadata.cartId,
