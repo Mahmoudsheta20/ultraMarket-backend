@@ -5,7 +5,7 @@ const { createOrder } = require("../services/apiCheckout");
 const stripe = require("stripe")(
   "sk_test_51LpszqFsXNFAupQMcLBtJa9g2nayhasGIOfZYOE85s6o3XdB1EGeNLx4fEdwP0DhDVJ8JKMlCtS0WYH0Yf4Lre1Q00g0iBqCtN"
 );
-const YOUR_DOMAIN = "http://localhost:4000";
+const YOUR_DOMAIN = "https://apiultramarket.vercel.app";
 
 router.post("/create-checkout-session", async (req, res) => {
   const token = req.headers.authorization?.split(" ")[1];
@@ -73,6 +73,7 @@ router.post("/create-checkout-session", async (req, res) => {
         name: "Mahmoud Sheta",
       },
     });
+    res.redirect;
 
     res.json({ url: session.url });
   } catch (error) {
@@ -91,10 +92,21 @@ router.get("/session-status", async (req, res) => {
   const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
   console.log(session);
   if (session.status === "complete") {
-    res.send({
-      cartId: session.metadata.cartId,
-      userId: session.metadata.userId,
-    });
+    const userAgent = req.headers["user-agent"] || "";
+
+    if (/iPhone|iPad|Android/i.test(userAgent)) {
+      // Mobile: Redirect to Flutter app using deep link
+      const flutterDeepLink = `ultra_ecommerce://orderView`;
+      return res.redirect(flutterDeepLink);
+    } else {
+      // Web: Redirect to web order page
+      const webOrderUrl = `https://yourdomain.com/order/${cartId}`;
+      return res.send(session);
+    }
+    // res.send({
+    //   cartId: session.metadata.cartId,
+    //   userId: session.metadata.userId,
+    // });
   }
 });
 module.exports = router;
