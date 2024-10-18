@@ -2,7 +2,12 @@
 const express = require("express");
 const router = express.Router();
 const supabase = require("../supabaseClient");
-const { createAddress, getAddressById } = require("../services/apiUser");
+const {
+  createAddress,
+  getAddressById,
+  deleteAdressById,
+  updateAddress,
+} = require("../services/apiUser");
 
 // Get all products
 router.post("/login", async (req, res) => {
@@ -51,12 +56,26 @@ router.post("/signup", async (req, res) => {
   res.json(data);
 });
 
-router.post("/add-address", async (req, res) => {
+router.post("/address", async (req, res) => {
   const { userId, city, street, lat, lon } = req.body;
+
   try {
     const response = await createAddress({ userId, city, street, lat, lon });
+    return res.json({ message: "The Address Has Added", response });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+router.put("/address/:addressId", async (req, res) => {
+  const { userId, city, street, lat, lon } = req.body;
+  const { addressId } = req.params;
+  try {
+    const response = await updateAddress(
+      { userId, city, street, lat, lon },
+      addressId
+    );
 
-    return res.send("The Address Has Added");
+    return res.json({ message: "The Address Has Updated", response });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -66,6 +85,15 @@ router.get("/address/:userId", async (req, res) => {
   try {
     const address = await getAddressById(userId);
     return res.json({ address });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+router.delete("/address/:addressId", async (req, res) => {
+  const { addressId } = req.params;
+  try {
+    const address = await deleteAdressById(addressId);
+    return res.json({ message: "The Address Has been Deleted" });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

@@ -70,7 +70,6 @@ router.post("/create-checkout-session", async (req, res) => {
       },
     });
     res.redirect;
-
     res.json({ url: session.url });
   } catch (error) {
     console.error(error);
@@ -94,7 +93,6 @@ router.get("/session-status", async (req, res) => {
     // });
 
     const userAgent = req.headers["user-agent"] || "";
-
     if (/iPhone|iPad|Android/i.test(userAgent)) {
       // Mobile: Redirect to Flutter app using deep link
       const flutterDeepLink = `ultra_ecommerce://order?oderId=652546`;
