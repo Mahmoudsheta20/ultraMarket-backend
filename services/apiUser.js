@@ -6,6 +6,9 @@ async function createAddress(address) {
       .from("address")
       .insert([address])
       .select();
+    if (error) {
+      throw new Error(error);
+    }
     return data;
   } catch (err) {
     throw new Error(err.message);
@@ -17,10 +20,15 @@ async function updateAddress(address, addressId) {
       .from("address")
       .update([address])
       .eq("id", addressId)
-      .select();
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
     return data;
   } catch (err) {
-    throw new Error(err.message);
+    throw new Error(err);
   }
 }
 async function getAddressById(userId) {
@@ -30,7 +38,9 @@ async function getAddressById(userId) {
       .select("*")
       .eq("userId", userId)
       .select();
-    console.log(data);
+    if (error) {
+      throw new Error(error);
+    }
     return data;
   } catch (err) {
     throw new Error(err.message);

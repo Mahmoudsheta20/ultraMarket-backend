@@ -6,6 +6,7 @@ const userRoutes = require("./routes/userRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const statisticsRoutes = require("./routes/statisticsRoutes");
 const checkoutRouter = require("./routes/checkoutRouter");
+const ordersRouters = require("./routes/ordersRouters");
 
 const app = express();
 const port = 4000;
@@ -22,6 +23,7 @@ app.use("/user", userRoutes);
 app.use("/cart", cartRoutes);
 app.use("/statistics", statisticsRoutes);
 app.use("/checkout", checkoutRouter);
+app.use("/orders", ordersRouters);
 
 app.post("/callback", async (req, res) => {
   const { payment_result, customer_details } = req.body;

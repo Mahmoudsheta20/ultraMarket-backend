@@ -5,18 +5,18 @@ const { createOrder, getProdutCart } = require("../services/apiCheckout");
 const stripe = require("stripe")(
   "sk_test_51LpszqFsXNFAupQMcLBtJa9g2nayhasGIOfZYOE85s6o3XdB1EGeNLx4fEdwP0DhDVJ8JKMlCtS0WYH0Yf4Lre1Q00g0iBqCtN"
 );
-const YOUR_DOMAIN = "https://apiultramarket.vercel.app";
+const YOUR_DOMAIN = "http://localhost:4000";
+// const YOUR_DOMAIN = "https://apiultramarket.vercel.app";
 
 router.post("/create-checkout-session", async (req, res) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  const { cartId, userId } = req.body;
+  const { cartId, userId, addressId } = req.body;
 
   try {
     const productsCard = await getProdutCart(cartId);
-    console.log(productsCard);
 
     // First, create a product
     const products = productsCard?.products?.map((product) => {
@@ -65,8 +65,9 @@ router.post("/create-checkout-session", async (req, res) => {
       success_url: `${YOUR_DOMAIN}/checkout/session-status?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${YOUR_DOMAIN}/checkout/cancel`,
       metadata: {
-        cartId: productsCard?.cartid,
+        cartId,
         userId: productsCard?.userid,
+        addressId,
       },
     });
     res.redirect;
@@ -84,23 +85,30 @@ router.get("/session-status", async (req, res) => {
   // if (!token) {
   //   return res.status(401).json({ error: "Unauthorized" });
   // }
-  const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+  const { metadata, status } = await stripe.checkout.sessions.retrieve(
+    req.query.session_id
+  );
 
-  if (session.status === "complete") {
-    // return res.json({
-    //   success: true,
-    //   message: "Payment successful!",
-    // });
+  if (status === "complete") {
+    try {
+      const order = await createOrder(
+        metadata?.cartId,
+        metadata?.addressId,
+        metadata?.userId
+      );
 
-    const userAgent = req.headers["user-agent"] || "";
-    if (/iPhone|iPad|Android/i.test(userAgent)) {
-      // Mobile: Redirect to Flutter app using deep link
-      const flutterDeepLink = `ultra_ecommerce://order?oderId=652546`;
-      return res.redirect(flutterDeepLink);
-    } else {
-      // Web: Redirect to web order page
-      const webOrderUrl = `https://yourdomain.com/order`;
-      return res.redirect(webOrderUrl);
+      const userAgent = req.headers["user-agent"] || "";
+      if (/iPhone|iPad|Android/i.test(userAgent)) {
+        // Mobile: Redirect to Flutter app using deep link
+        const flutterDeepLink = `ultra_ecommerce://order?oderId=${order}`;
+        return res.redirect(flutterDeepLink);
+      } else {
+        // Web: Redirect to web order page
+        const webOrderUrl = `${YOUR_DOMAIN}/order?oderId=${order}`;
+        return res.redirect(webOrderUrl);
+      }
+    } catch (err) {
+      return res.status(400).send(err.message);
     }
   }
 });

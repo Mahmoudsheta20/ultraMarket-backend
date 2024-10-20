@@ -1,44 +1,75 @@
 const supabase = require("../supabaseClient");
 
-async function createOrder(cartid, userid) {
-  let {
-    data: { totalamount },
-    error,
-  } = await supabase
-    .from("cart")
-    .select("totalamount")
-    .eq("cartid", cartid)
-    .eq("status", "Pending")
-    .single();
-  console.log(totalamount);
-  if (error) {
-    throw new Error(error.message);
+async function createOrder(cartid, addressId, userid) {
+  try {
+    let {
+      data: { totalamount },
+      error,
+    } = await supabase
+      .from("cart")
+      .select("totalamount")
+      .eq("cartid", cartid)
+      .eq("status", "Pending")
+      .single();
+    if (error) {
+      throw new Error({ message: "This Cart Is Ordered" });
+    }
+
+    const {
+      data: { orderid },
+      error: orderError,
+    } = await supabase
+      .from("orders")
+      .insert({
+        userid,
+        totalamount,
+        cartid,
+        isPaid: "true",
+        status: "0",
+        shipping_address: addressId,
+      })
+      .select()
+      .single();
+
+    let { error: error_update } = await supabase
+      .from("cart")
+      .update({ status: "Done" })
+      .eq("cartid", cartid);
+
+    if (error || orderError || error_update) {
+      throw new Error(error || orderError || error_update);
+    }
+    return orderid;
+  } catch (err) {
+    throw new Error(err);
   }
-  let { error: error_update } = await supabase
-    .from("cart")
-    .update({ status: "Done" })
-    .eq("cartid", cartid);
 
-  if (error_update) {
-    throw new Error(error_update.message);
-  }
+  // let { error: error_update } = await supabase
+  //   .from("cart")
+  //   .update({ status: "Done" })
+  //   .eq("cartid", cartid);
 
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .insert({
-      userid,
-      totalamount,
-      cartid,
-      isPaid: "true",
-      status: "Pending",
-    });
+  // if (error_update) {
+  //   throw new Error(error_update.message);
+  // }
 
-  if (orderError) {
-    console.log(orderError);
-    throw new Error(orderError.message);
-  }
+  // const { data: order, error: orderError } = await supabase
+  //   .from("orders")
+  //   .insert({
+  //     userid,
+  //     totalamount,
+  //     cartid,
+  //     isPaid: "true",
+  //     status: "Pending",
+  //     shipping_address: addressId,
+  //   });
 
-  return { message: "Order created successfully", order };
+  // if (orderError) {
+  //   console.log(orderError);
+  //   throw new Error(orderError.message);
+  // }
+
+  // return { message: "Order created successfully", order };
 }
 
 async function getProdutCart(cartId) {

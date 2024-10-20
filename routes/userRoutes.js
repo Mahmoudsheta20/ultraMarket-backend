@@ -74,10 +74,13 @@ router.put("/address/:addressId", async (req, res) => {
       { userId, city, street, lat, lon },
       addressId
     );
-
-    return res.json({ message: "The Address Has Updated", response });
+    if (response) {
+      return res.json({ message: "The Address Has Updated", response });
+    }
+    return res.status(400).json({ error: "This Address Not Exists" });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.log(err);
+    return res.status(500).json({ error: "This Address Not Exists" });
   }
 });
 router.get("/address/:userId", async (req, res) => {
